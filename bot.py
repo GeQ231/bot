@@ -19,10 +19,15 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
-bot.run(TOKEN)
+
 @bot.event
 async def on_ready():
     print(f"🎵 Bot connesso come {bot.user}")
+    
+@bot.event
+async def on_ready():
+    print(f"🎵 Bot connesso come {bot.user}")
+    print("Il bot è pronto a ricevere comandi!")
 
 @bot.command()
 async def ciao(ctx):
