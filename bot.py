@@ -2,55 +2,49 @@ import discord
 from discord.ext import commands, tasks
 import yt_dlp
 import os
-import asyncio
-import os
 from dotenv import load_dotenv
 
-
-
-
-# Carica il token dal file .env (crea un file .env con TOKEN=TUO_TOKEN)
-
-load_dotenv()  # Carica il file .env
+# Carica il token dal file .env
+load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-
-
+# Intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.presences = True
 intents.members = True
+intents.voice_states = True  # Aggiunto per controllare chi è nei canali vocali
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"🎵 Bot connesso come {bot.user}")
-    check_users_online.start() 
+    check_users_online.start()
 
 @tasks.loop(minutes=5)  # Controlla ogni 5 minuti
 async def check_users_online():
     for guild in bot.guilds:
-        members = guild.members
-        online_users = [m for m in members if not m.bot and m.status != discord.Status.offline]
+        active_members = [
+            m for m in guild.members if not m.bot and m.status != discord.Status.offline
+        ]
+        active_voice_users = [
+            m for vc in guild.voice_channels for m in vc.members if not m.bot
+        ]
 
-        if not online_users:  # Nessun utente online (escludendo i bot)
-            print("Nessun utente online, il bot si spegne...")
+        if not active_members and not active_voice_users:  # Nessuno online o in vocale
+            print("Nessun utente attivo nel server. Spegnimento...")
             await bot.close()
-            break 
-          
-@bot.event
-async def on_ready():
-    print(f"🎵 Bot connesso come {bot.user}")
-    print("Il bot è pronto a ricevere comandi!")
+            break
 
 @bot.command()
 async def ciao(ctx):
     await ctx.send("Yippie! Come va?")
-    
+
 def search_youtube(query):
     """Cerca un video su YouTube e restituisce il primo link disponibile."""
     ydl_opts = {
-        "quiet": False,
+        "quiet": True,
         "default_search": "ytsearch",
         "noplaylist": True,
     }
@@ -95,7 +89,7 @@ async def play(ctx, *, query):
         return
     
     voice_channel = ctx.author.voice.channel
-    vc = await voice_channel.connect() if not ctx.voice_client else ctx.voice_client
+    vc = ctx.voice_client if ctx.voice_client else await voice_channel.connect()
 
     url = search_youtube(query)
     
@@ -125,7 +119,7 @@ async def play(ctx, *, query):
 async def stop(ctx):
     """Ferma la musica senza far uscire il bot dal canale."""
     if ctx.voice_client and ctx.voice_client.is_playing():
-        ctx.voice_client.stop()  # ⬅️ Ferma la musica ma NON disconnette il bot
+        ctx.voice_client.stop()
         await ctx.send("⏹️ Musica fermata!")
     else:
         await ctx.send("❌ Nessuna musica in riproduzione.")
