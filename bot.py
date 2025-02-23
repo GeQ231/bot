@@ -1,7 +1,8 @@
+import os
+import time
 import discord
 from discord.ext import commands, tasks
 import yt_dlp
-import os
 from dotenv import load_dotenv
 
 # Carica il token dal file .env
@@ -124,4 +125,10 @@ async def stop(ctx):
     else:
         await ctx.send("❌ Nessuna musica in riproduzione.")
 
-bot.run(TOKEN)
+# Loop di Keep-Alive per il riavvio automatico
+while True:
+    try:
+        bot.run(TOKEN)
+    except Exception as e:
+        print(f"Errore: {e}. Riavvio in 10 secondi...")
+        time.sleep(10)
