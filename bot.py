@@ -1,5 +1,4 @@
 import os
-import time
 import discord
 from discord.ext import commands, tasks
 import yt_dlp
@@ -14,14 +13,14 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.presences = True
 intents.members = True
-intents.voice_states = True  # Aggiunto per controllare chi è nei canali vocali
+intents.voice_states = True  # Per controllare chi è nei canali vocali
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"🎵 Bot connesso come {bot.user}")
-    check_users_online.start()
+    check_users_online.start()  # Avvia il controllo utenti
 
 @tasks.loop(minutes=5)  # Controlla ogni 5 minuti
 async def check_users_online():
@@ -36,7 +35,7 @@ async def check_users_online():
         if not active_members and not active_voice_users:  # Nessuno online o in vocale
             print("Nessun utente attivo nel server. Spegnimento...")
             await bot.close()
-            break
+            return
 
 @bot.command()
 async def ciao(ctx):
@@ -125,10 +124,5 @@ async def stop(ctx):
     else:
         await ctx.send("❌ Nessuna musica in riproduzione.")
 
-# Loop di Keep-Alive per il riavvio automatico
-while True:
-    try:
-        bot.run(TOKEN)
-    except Exception as e:
-        print(f"Errore: {e}. Riavvio in 10 secondi...")
-        time.sleep(10)
+# Avvia il bot normalmente
+bot.run(TOKEN)
